@@ -1,3 +1,5 @@
 *.p12
 *.dat
 *.sqlite
+*.pyc
+*.DS_Store
