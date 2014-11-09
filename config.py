@@ -4,9 +4,9 @@ class Config(object):
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
-    SECRET_KEY = 'this-really-needs-to-be-changed'
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-
+    SECRET_KEY = 'not_a_secret'
+    CELERY_BROKER_URL='redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 
 class ProductionConfig(Config):
     DEBUG = False
