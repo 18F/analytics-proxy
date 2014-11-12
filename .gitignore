@@ -3,3 +3,5 @@
 *.sqlite
 *.pyc
 *.DS_Store
+*.jsons
+celerybeat-schedule.db
