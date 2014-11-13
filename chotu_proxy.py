@@ -6,7 +6,7 @@ from urlparse import urlparse
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask import Flask, render_template, jsonify
-from extensions import initialize_service, make_celery
+from extensions import *
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -30,14 +30,15 @@ def analytics_parser(url):
 
 def write_analytics(name, url, SERVICE):
     kwargs = analytics_parser(url)
-    data=SERVICE.data().ga().get(
+    result=SERVICE.data().ga().get(
                                ids=kwargs['ids'],
                                start_date=kwargs['start-date'],
                                end_date=kwargs['end-date'],
                                metrics=kwargs['metrics'],
                                dimensions=kwargs['dimensions'],
                                ).execute()
-    data = data.get('rows')
+    data = [[col['name'].strip("ga:") for col in result['columnHeaders']]]
+    data.extend(result.get('rows'))
     name = "templates/%s.json" % name
     with open(name, 'w') as outfile:
         json.dump(data,outfile)
@@ -58,15 +59,16 @@ def process_analytics():
 '''ROUTES'''
 @app.route("/write", methods = ['GET'])
 def write_data():
-	process_analytics.delay()
+	process_analytics()
 	return "writing api"
 
 
 @app.route("/api/<proxy_name>", methods = ['GET'])
+@crossdomain(origin='*')
 def get_api(proxy_name):
 	with open('templates/%s.json' % proxy_name,'r') as infile:
-		data = json.loads(infile.read())
-	return jsonify(data)
+		data =infile.read() #json.loads(infile.read())
+	return data#jsonify(data)
 
 
 if __name__ == '__main__':
