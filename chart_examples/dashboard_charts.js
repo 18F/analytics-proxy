@@ -13,7 +13,7 @@ function httpGet_to_array(theUrl)
 
 function drawVisualization() {
 
-  var data = new google.visualization.arrayToDataTable(httpGet_to_array("http://127.0.0.1:5000/api/test1"));
+  var data = new google.visualization.arrayToDataTable(httpGet_to_array("http://127.0.0.1:5000/api/test2"));
 
   var regionTable = new google.visualization.ChartWrapper({
       "containerId": 'region_table',

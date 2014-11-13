@@ -4,7 +4,7 @@ from celery.schedules import crontab
 CELERYBEAT_SCHEDULE = {
     'every-minute': {
         'task': 'tasks.process_analytics',
-        'schedule': crontab(minute=0, hour='*/1'),
+        'schedule': crontab(minute='*/1'),#crontab(minute=0, hour='*/1'), #
         'args': (),
     },
 }
