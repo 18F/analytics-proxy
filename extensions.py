@@ -1,5 +1,4 @@
 from celery import Celery
-import settings
 from oauth2client.client import SignedJwtAssertionCredentials
 from httplib2 import Http
 from apiclient.discovery import build
@@ -20,10 +19,10 @@ def make_celery(app):
     return celery
 
 
-def initialize_service():
+def initialize_service(config):
     '''initalizes google analytics service'''
-    client_email = '556009582678-d1er91t08n95fg8ldvaojdric02pqd8u@developer.gserviceaccount.com'
-    with open("ramirez_key.p12") as f:
+    client_email = config['CLIENT_EMAIL']
+    with open(config['GA_P12_KEY']) as f:
       private_key = f.read()
     credentials = SignedJwtAssertionCredentials(client_email, private_key,
         'https://www.googleapis.com/auth/analytics.readonly')

@@ -10,7 +10,6 @@ from extensions import *
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
-print os.environ['APP_SETTINGS']
 
 #start db
 db = SQLAlchemy(app)
@@ -64,7 +63,7 @@ def get_data(proxy_name):
 '''CELERY TASKS'''
 @celery.task(name="tasks.process_analytics")
 def process_analytics():
-    SERVICE= initialize_service()
+    SERVICE= initialize_service(app.config)
     proxies = Proxy.query.all()
     for proxy in proxies:
         print proxy.url
