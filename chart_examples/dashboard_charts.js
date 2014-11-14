@@ -7,8 +7,8 @@ function httpGet_to_array(theUrl)
     xmlHttp = new XMLHttpRequest();
     xmlHttp.open( "GET", theUrl, false );
     xmlHttp.send( null );
-    var array = JSON.parse("[" + xmlHttp.responseText + "]");
-    return array[0];
+    var array = JSON.parse( xmlHttp.responseText );
+    return array['data'];
 }
 
 function drawVisualization() {

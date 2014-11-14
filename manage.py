@@ -15,7 +15,7 @@ def initalize_database():
         lines = f.readlines()
     for line in lines:
         line = line.strip("\n").split("|")
-        load_data(endpoint=line[0], url=line[0])
+        load_data(endpoint=line[0], url=line[1])
 
 if __name__ == '__main__':
     manager.run()

@@ -40,23 +40,25 @@ def call_api(url, SERVICE):
 
 def prepare_data(result):
     '''prepares data to return'''
-    data = [[col['name'].strip("ga:") for col in result['columnHeaders']]]
-    data.extend(result.get('rows'))
-    return data
+    header = [[col['name'].strip("ga:") for col in result['columnHeaders']]]
+    rows = result.get('rows')
+    return header, rows
 
 
-def load_data(endpoint, url, data = None):
+def load_data(endpoint, url, header = None, rows = None):
     '''load data into database'''
-    proxy = Proxy(endpoint=endpoint, url=url, data=data)
+    proxy = Proxy(endpoint=endpoint, url=url, header=header, rows=rows)
     db.session.merge(proxy)
     db.session.commit()
 
 
-def get_data(proxy_name="test1"):
+def get_data(proxy_name):
     result = Proxy.query.filter_by(endpoint=proxy_name).first()
     if not result:
         return """{"Error":"No Data"}"""
-    return jsonify(result.data)
+    #data = {'header':result.header, 'rows':result.rows}
+    data = {'data': result.header + result.rows}
+    return jsonify(data)
 
 
 '''CELERY TASKS'''
@@ -65,8 +67,15 @@ def process_analytics():
     SERVICE= initialize_service()
     proxies = Proxy.query.all()
     for proxy in proxies:
-        data = prepare_data(call_api(url=proxy.url, SERVICE=SERVICE))
-        load_data(endpoint=proxy.endpoint,url=proxy.url,data=data)
+        print proxy.url
+        response = call_api(url=proxy.url, SERVICE=SERVICE)
+        header, rows = prepare_data(response)
+        load_data(
+            endpoint = proxy.endpoint,
+            url = proxy.url,
+            header = header,
+            rows=  rows
+        )
 
 
 '''ROUTES'''

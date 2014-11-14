@@ -6,12 +6,14 @@ class Proxy(db.Model):
 
     endpoint = db.Column(db.String(), primary_key=True)
     url = db.Column(db.String(), nullable=False, unique=True)
-    data = db.Column(JSON, nullable=True)
+    header = db.Column(JSON, nullable=True)
+    rows = db.Column(JSON, nullable=True)
 
-    def __init__(self, endpoint, url, data = None):
+    def __init__(self, endpoint, url, header = None, rows = None):
         self.endpoint = endpoint
         self.url = url
-        self.data = data
+        self.header = header
+        self.rows = rows
 
     def __repr__(self):
         return '<endpoint {}>'.format(self.endpoint)
