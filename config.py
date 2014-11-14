@@ -8,6 +8,7 @@ class Config(object):
     CELERY_BROKER_URL = "sqla+sqlite:///celerydb.sqlite"
     #CELERY_BROKER_URL='redis://localhost:6379/0'
     #CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 
 
 class ProductionConfig(Config):

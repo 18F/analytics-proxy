@@ -1,26 +1,26 @@
 #!chotu_proxy/bin/python
 import os
 import json
-import re
-import datetime
-import logging
-
 from urlparse import urlparse
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask import Flask, render_template, jsonify
+
 from extensions import *
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 print os.environ['APP_SETTINGS']
 
+#start db
+db = SQLAlchemy(app)
 #start celery
 celery = make_celery(app)
 celery.config_from_object('celeryconfig')
 
+from models import *
 
-'''SCRIPTS'''
+'''Scripts'''
 def analytics_parser(url):
     '''parses urls, and makes sure to convert "-" to "_" '''
     o = urlparse(url).query.split('&')
@@ -45,24 +45,28 @@ def prepare_data(result):
     return data
 
 
-def write_analytics(name, url, SERVICE):
-    '''writes analytics to static file'''
-    result = call_api(url, SERVICE)
-    data = prepare_data(result)
-    name = "templates/%s.json" % name
-    with open(name, 'w') as outfile:
-        json.dump(data,outfile)
+def load_data(endpoint, url, data = None):
+    '''load data into database'''
+    proxy = Proxy(endpoint=endpoint, url=url, data=data)
+    db.session.merge(proxy)
+    db.session.commit()
+
+
+def get_data(proxy_name="test1"):
+    result = Proxy.query.filter_by(endpoint=proxy_name).first()
+    if not result:
+        return """{"Error":"No Data"}"""
+    return jsonify(result.data)
 
 
 '''CELERY TASKS'''
 @celery.task(name="tasks.process_analytics")
 def process_analytics():
     SERVICE= initialize_service()
-    with open('analytics_urls.txt') as f:
-        lines = f.readlines()
-    for line in lines:
-        line = line.strip("\n").split("|")
-        write_analytics(line[0],line[1],SERVICE)
+    proxies = Proxy.query.all()
+    for proxy in proxies:
+        data = prepare_data(call_api(url=proxy.url, SERVICE=SERVICE))
+        load_data(endpoint=proxy.endpoint,url=proxy.url,data=data)
 
 
 '''ROUTES'''
@@ -75,9 +79,8 @@ def write_data():
 @app.route("/api/<proxy_name>", methods = ['GET'])
 @crossdomain(origin='*')
 def get_api(proxy_name):
-  with open('templates/%s.json' % proxy_name,'r') as infile:
-    data =infile.read()
-  return data
+    return get_data(proxy_name)
+
 
 @app.route("/api_direct/<agrs>", methods = ['GET'])
 def get_api_direct(agrs):
@@ -86,6 +89,7 @@ def get_api_direct(agrs):
     result = call_api(request_url, SERVICE)
     data = prepare_data(result)
     return jsonify(data)
+
 
 if __name__ == '__main__':
     app.run(debug = True)
