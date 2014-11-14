@@ -1,6 +1,6 @@
 ## Analytics Proxy
 
-Analytics Proxy is allows you to publicly share your Google Analytics reporting data. It was partially inspired by [Google Analytics superProxy](https://github.com/googleanalytics/google-analytics-super-proxy); however, unlike [Google Analytics superProxy](https://github.com/googleanalytics/google-analytics-super-proxy) it doesn’t need to be deployed on [Google App Engine](https://appengine.google.com/)
+Analytics Proxy allows you to publicly share Google Analytics reporting data. It was partially inspired by [Google Analytics superProxy](https://github.com/googleanalytics/google-analytics-super-proxy); however, unlike [Google Analytics superProxy](https://github.com/googleanalytics/google-analytics-super-proxy) it doesn’t need to be deployed on [Google App Engine](https://appengine.google.com/)
 
 ## Setup
 
@@ -22,7 +22,7 @@ mkvirtualenv <name_of_env>
 ```
 
 ####Bash Settings
-Start the VirtualEnv and edit the postactivate file
+Start the virtualenv and edit the postactivate file
 ```bash
 workon <name_of_env>
 nano $VIRTUAL_ENV/bin/postactivate
@@ -33,7 +33,6 @@ cd ~/<path_to_project>
 export APP_SETTINGS="config.DevelopmentConfig"
 export DATABASE_URL="postgresql://localhost/<name_of_database>”
 ```
-
 
 ####Google Analytics Service Account
 
