@@ -34,8 +34,14 @@ export APP_SETTINGS="config.DevelopmentConfig"
 export DATABASE_URL="postgresql://localhost/<name_of_database>”
 ```
 
-####Google Analytics Service Account
+####Initalizing Database Tables
+```bash
+python manage.py db init
+python manage.py db migrate
+python manage.py db upgrade
+```
 
+####Google Analytics Service Account
 1. [Create Google API service account and take not of the client email](https://developers.google.com/accounts/docs/OAuth2ServiceAccount).
 2.  Download the P12 private key file and place it in the analytics-proxy folder.
 3.  Make sure to add the client email to the Google Analytics account.
