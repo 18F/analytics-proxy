@@ -1,13 +1,11 @@
 import unittest
-from analytics_proxy import *
 import tempfile
 import os
 import json
-
+from analytics_proxy import *
 from models import Proxy
-from manage import initalize_database
 
-class MyTest(unittest.TestCase):
+class AnalyticsProxyTests(unittest.TestCase):
 
     def setUp(self):
         app.config['TESTING'] = True
