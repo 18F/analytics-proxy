@@ -1,8 +1,9 @@
 import json
 from urlparse import urlparse
-from flask.ext.sqlalchemy import SQLAlchemy
+#from flask.ext.sqlalchemy import SQLAlchemy
 from models import Proxy
-#from analytics_proxy import db
+from analytics_proxy import db
+
 
 def analytics_parser(url):
     '''parses urls, and makes sure to convert "-" to "_" '''
@@ -10,14 +11,14 @@ def analytics_parser(url):
     kwargs = {}
     for element in o:
         element = element.split("=")
-        kwargs[element[0].replace("-","_")] = element[1]
+        kwargs[element[0].replace("-", "_")] = element[1]
     return kwargs
 
 
 def call_api(url, SERVICE):
     '''calls api and returns result'''
     kwargs = analytics_parser(url)
-    result=SERVICE.data().ga().get(**kwargs).execute()
+    result = SERVICE.data().ga().get(**kwargs).execute()
     return result
 
 
@@ -28,7 +29,7 @@ def prepare_data(result):
     return data
 
 
-def load_data(endpoint, url, data = None):
+def load_data(endpoint, url, data=None):
     proxy = Proxy(endpoint=endpoint, url=url, data=data)
     db.session.merge(proxy)
     db.session.commit()
@@ -42,7 +43,7 @@ def initalize_database():
         load_data(endpoint=line[0], url=line[0])
 
 
-def update_database(endpoint, url, data = None):
+def update_database(endpoint, url, data=None):
     result = Proxy.query.filter_by(endpoint=endpoint, url=url).first()
     result.data = data
     db.session.commit()
@@ -59,4 +60,4 @@ def write_analytics(name, data):
     '''writes analytics to static file'''
     name = "templates/%s.json" % name
     with open(name, 'w') as outfile:
-        json.dump(data,outfile)
+        json.dump(data, outfile)

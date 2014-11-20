@@ -6,12 +6,15 @@ from datetime import timedelta
 from flask import make_response, request, current_app
 from functools import update_wrapper
 
+
 def make_celery(app):
-    celery = Celery(app.import_name,  broker=app.config['CELERY_BROKER_URL'])
+    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
+
     class ContextTask(TaskBase):
         abstract = True
+
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
@@ -23,8 +26,9 @@ def initialize_service(config):
     '''initalizes google analytics service'''
     client_email = config['CLIENT_EMAIL']
     with open(config['GA_P12_KEY']) as f:
-      private_key = f.read()
-    credentials = SignedJwtAssertionCredentials(client_email, private_key,
+        private_key = f.read()
+    credentials = SignedJwtAssertionCredentials(
+        client_email, private_key,
         'https://www.googleapis.com/auth/analytics.readonly')
     http_auth = credentials.authorize(Http())
 
