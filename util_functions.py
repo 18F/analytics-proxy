@@ -1,32 +1,18 @@
-from celery import Celery
+import pickle
+
 from oauth2client.client import SignedJwtAssertionCredentials
 from httplib2 import Http
 from apiclient.discovery import build
-from datetime import timedelta
 from flask import make_response, request, current_app
+from datetime import timedelta
 from functools import update_wrapper
-
-
-def make_celery(app):
-    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-
-    class ContextTask(TaskBase):
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    celery.Task = ContextTask
-    return celery
 
 
 def initialize_service(config):
     """ Initalizes google analytics service """
 
     client_email = config['CLIENT_EMAIL']
-    with open(config['GA_P12_KEY']) as f:
+    with open(config['GA_P12_KEY'], 'r') as f:
         private_key = f.read()
     credentials = SignedJwtAssertionCredentials(
         client_email, private_key,
@@ -34,6 +20,28 @@ def initialize_service(config):
     http_auth = credentials.authorize(Http())
 
     return build('analytics', 'v3', http=http_auth)
+
+
+def call_api(query, service):
+    """ calls api and returns result """
+    result = service.data().ga().get(**query).execute()
+    return result
+
+
+def prepare_data(result):
+    """ Prepares data to return """
+    header = [col['name'].strip("ga:") for col in result['columnHeaders']]
+    data = []
+    for row in result.get('rows'):
+        data.append(dict(zip(header, row)))
+    return {'data': data}
+
+
+def load_reports(redis_client):
+    """ Loads reports into redis """
+    from reports import report_dict
+    for item in report_dict:
+        redis_client.set(item['report_name'], pickle.dumps(item))
 
 
 def crossdomain(origin=None, methods=None, headers=None,

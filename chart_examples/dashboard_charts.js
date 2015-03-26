@@ -8,12 +8,22 @@ function httpGet_to_array(theUrl)
     xmlHttp.open( "GET", theUrl, false );
     xmlHttp.send( null );
     var array = JSON.parse( xmlHttp.responseText );
-    return array['data'];
+    var data = [];
+    cols = Object.keys(array['data'][0]);
+    data.push(cols)
+    for(var i = 0; i < array['data'].length; i++ ){
+      var row = [];
+      for(var j = 0; k=j < cols.length; j++){
+        row.push(array['data'][i][cols[j]]);
+      }
+      data.push(row)
+    }
+    return data;
 }
 
 function drawVisualization() {
 
-  var data = new google.visualization.arrayToDataTable(httpGet_to_array("http://127.0.0.1:5000/api/test2"));
+  var data = new google.visualization.arrayToDataTable(httpGet_to_array("http://127.0.0.1:5000/data/top-countries"));
 
   var regionTable = new google.visualization.ChartWrapper({
       "containerId": 'region_table',

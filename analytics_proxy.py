@@ -1,114 +1,52 @@
-#!chotu_proxy/bin/python
 import os
-from urlparse import urlparse
+import redis
+import pickle
 
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify
+from flask import Flask, Response, jsonify
 
-from extensions import make_celery, crossdomain, initialize_service
+from util_functions import (
+    initialize_service, call_api, prepare_data, load_reports, crossdomain)
 
 app = Flask(__name__)
-app.config.from_object(os.environ['APP_SETTINGS'])
-
-#start db
-db = SQLAlchemy(app)
-#start celery
-celery = make_celery(app)
-celery.config_from_object('celeryconfig')
-
-import models
-
-'''Scripts'''
-
-
-def analytics_parser(url):
-    '''parses urls, and makes sure to convert "-" to "_" '''
-    o = urlparse(url).query.split('&')
-    kwargs = {}
-    for element in o:
-        element = element.split("=")
-        kwargs[element[0].replace("-", "_")] = element[1]
-    return kwargs
-
-
-def call_api(url, service):
-    '''calls api and returns result'''
-    kwargs = analytics_parser(url)
-    result = SERVICE.data().ga().get(**kwargs).execute()
-    return result
-
-
-def prepare_data(result):
-    '''prepares data to return'''
-    header = [[col['name'].strip("ga:") for col in result['columnHeaders']]]
-    rows = result.get('rows')
-    return header, rows
-
-
-def load_data(endpoint, url, header=None, rows=None):
-    '''load data into database'''
-    proxy = models.Proxy(endpoint=endpoint, url=url, header=header, rows=rows)
-    db.session.merge(proxy)
-    db.session.commit()
-
-
-def get_data(proxy_name):
-    result = models.Proxy.query.filter_by(endpoint=proxy_name).first()
-    if not result:
-        return """{"Error":"No Data"}"""
-    data = {'data': result.header + result.rows}
-    return jsonify(data)
-
-
-'''CELERY TASKS'''
-
-
-@celery.task(name="tasks.process_analytics")
-def process_analytics(specific_proxies=None):
-    SERVICE = initialize_service(app.config)
-    if specific_proxies:
-        proxies = specific_proxies
-    else:
-        proxies = models.Proxy.query.all()
-    for proxy in proxies:
-        response = call_api(url=proxy.url, SERVICE=SERVICE)
-        header, rows = prepare_data(response)
-        load_data(
-            endpoint=proxy.endpoint,
-            url=proxy.url,
-            header=header,
-            rows=rows
-        )
-
-
-'''ROUTES'''
+app.config.from_object(os.getenv('APP_SETTINGS'))
+app.redis = redis.StrictRedis(host=app.config['REDIS_HOST'], port=6379, db=0)
+load_reports(app.redis)
 
 
 @app.route("/", methods=['GET'])
 def index():
-    return "HOME"
+    return "Project Info"
 
 
-@app.route("/write", methods=['GET'])
-def write_data():
-    process_analytics()
-    return "writing api"
-
-
-@app.route("/api/<proxy_name>", methods=['GET'])
+@app.route("/data/<report_name>", methods=['GET'])
 @crossdomain(origin='*')
-def get_api(proxy_name):
-    return get_data(proxy_name)
+def get_analytics(report_name):
+
+    report = app.redis.get(report_name)
+    if not report:
+        response = Response(
+            "{'error': 'No Report'}",
+            status=200,
+            mimetype='application/json'
+        )
+    else:
+        report = pickle.loads(report)
+        redis_data = app.redis.get(report_name + '_data')
+        if not redis_data:
+            ga_api_service = initialize_service(app.config)
+            data = prepare_data(
+                call_api(query=report['query'], service=ga_api_service))
+            app.redis.set(report_name + '_data', pickle.dumps(data))
+            app.redis.expire(report_name + '_data', report['refresh_rate'])
+        else:
+            data = pickle.loads(redis_data)
+
+        data['report'] = report
+        response = jsonify(data)
+
+    return response
 
 
-@app.route("/api_direct/<agrs>", methods=['GET'])
-def get_api_direct(agrs):
-    request_url = "http://127.0.0.1:5000/api_direct?%s" % agrs
-    SERVICE = initialize_service()
-    result = call_api(request_url, SERVICE)
-    data = prepare_data(result)
-    return jsonify(data)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
