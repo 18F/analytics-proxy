@@ -31,7 +31,7 @@ def analytics_parser(url):
     return kwargs
 
 
-def call_api(url, SERVICE):
+def call_api(url, service):
     '''calls api and returns result'''
     kwargs = analytics_parser(url)
     result = SERVICE.data().ga().get(**kwargs).execute()

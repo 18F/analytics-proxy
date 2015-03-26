@@ -23,7 +23,8 @@ def make_celery(app):
 
 
 def initialize_service(config):
-    '''initalizes google analytics service'''
+    """ Initalizes google analytics service """
+
     client_email = config['CLIENT_EMAIL']
     with open(config['GA_P12_KEY']) as f:
         private_key = f.read()
