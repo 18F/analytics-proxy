@@ -1,4 +1,9 @@
-
+"""
+This is an examples reports_dict.
+report_name: Name of report and url path of the report
+refresh_rate: How long report data will remain in cache
+query: A Google Analyics query.
+"""
 report_dict = [
     {
         'report_name': 'top-sources',
