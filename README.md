@@ -34,7 +34,7 @@ export GA_P12_KEY=<<Location of P12 Key>>
 ```
 
 ### Modify `reports.py` to meet reporting needs.
-```json
+```
     {
         'report_name': 'top-sources',
         'refresh_rate': 60,
