@@ -5,3 +5,5 @@
 *.DS_Store
 *.jsons
 celerybeat-schedule.db
+.env
+*.rdb
